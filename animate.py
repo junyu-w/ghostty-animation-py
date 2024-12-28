@@ -33,11 +33,21 @@ class DifferentialRenderer:
         self.show_cursor = "\033[?25h"
         self.clear = "\033[2J\033[H"
         self.erase_line = "\033[2K"
+        self.enable_sync_rendering = "\033[?2026h"
+        self.disable_sync_rendering = "\033[?2026l"
     
     def move_cursor(self, x: int, y: int) -> str:
         """Move cursor to position"""
         return f"\033[{y+1};{x+1}H"
     
+    def enable_synchronized_mode(self):
+        sys.stdout.write(self.enable_sync_rendering)
+        sys.stdout.flush()
+
+    def disable_synchronized_mode(self):
+        sys.stdout.write(self.disable_sync_rendering)
+        sys.stdout.flush()
+
     def find_line_differences(self, old_line: Optional[str], new_line: Optional[str]) -> List[Tuple[int, str]]:
         """Find differences between two lines"""
         if old_line is None and new_line is None:
@@ -108,7 +118,8 @@ class DifferentialRenderer:
 
         try:
             self.stdout.write(self.hide_cursor)
-            
+            self.enable_synchronized_mode()
+
             # Render first frame
             self.render_frame(self.frames[0])
             current_frame = self.frames[0]
@@ -124,6 +135,7 @@ class DifferentialRenderer:
         finally:
             self.stdout.write(self.show_cursor)
             self.stdout.write(self.clear)
+            self.disable_synchronized_mode()
             self.stdout.write("Animation stopped.\n")
             self.stdout.flush()
 
